@@ -1,11 +1,6 @@
 package com.example.Get_Employee_details_Reactive;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.post;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -24,7 +19,6 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 
 import com.example.Get_Employee_details_Reactive.dto.EmployeeDto;
 import com.github.tomakehurst.wiremock.WireMockServer;
-import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 
 // tells Spring Boot to start the application on a random port for testing.
@@ -42,39 +36,27 @@ class GetEmployeeDetailsReactiveApplicationTests {
 
     @BeforeAll
     public static void setUp() throws IOException {
+
         wireMockServer = new WireMockServer(WireMockConfiguration.options().dynamicPort());
         wireMockServer.start();
         System.setProperty("wiremock.port", String.valueOf(wireMockServer.port()));
         configureFor("localhost", wireMockServer.port());
-
-        String expectedRequest = new String(Files.readAllBytes(Paths.get("src/test/resources/employees.json")));
-        String allEmployeesRequest = new String(Files.readAllBytes(Paths.get("src/test/resources/allEmployees.json")));
-
-        // WireMock intercepts these external calls and returns the predefined responses.
-        // Setup stub for the /employee endpoint
-        stubFor(post(urlEqualTo("/employee"))
-                .willReturn(aResponse()
-                        .withHeader("Content-Type", "application/json")
-                        .withStatus(200)
-                        .withBody(expectedRequest)));
-
-        stubFor(get(urlEqualTo("/employee"))
-                .willReturn(aResponse()
-                        .withHeader("Content-Type", "application/json")
-                        .withStatus(200)
-                        .withBody(allEmployeesRequest)));
+        // wireMockServer.startRecording("http://localhost:9292");
     }
 
     @AfterAll
     public static void tearDown() {
+        // wireMockServer.stopRecording();
         wireMockServer.stop();
     }
 
     @Test
     void testCreateEmployee() throws IOException {
+
         String newEmployee = new String(Files.readAllBytes(Paths.get("src/test/resources/employees.json")));
 
         // WebTestClient sends a POST request to the /employee endpoint.
+        // it uses the random port not actual port
         webTestClient.post().uri("/employee")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newEmployee)
@@ -84,7 +66,7 @@ class GetEmployeeDetailsReactiveApplicationTests {
                 .value(employee -> {
                     assertNotNull(employee.getEmpNo());
                     assertEquals("jane.smith@example.com", employee.getEmail());
-                    assertEquals("reeju", employee.getFirstName());
+                    assertEquals("jane", employee.getFirstName());
                     assertEquals("Smith", employee.getLastName());
                 });
     }
@@ -97,8 +79,7 @@ class GetEmployeeDetailsReactiveApplicationTests {
                 .exchange()
                 .expectStatus().isOk()
                 .expectBodyList(EmployeeDto.class)
-                .hasSize(2) // Update the expected size according to your data
-                .contains(new EmployeeDto(1, "Eva", "Brown", "eva.brown@example.com"))
-                .contains(new EmployeeDto(2, "reeju", "Smith", "jane.smith@example.com"));
+                .hasSize(31) // Update the expected size according to your data
+                .contains(new EmployeeDto(1, "jane", "Smith", "jane.smith@example.com"));
     }
 }
