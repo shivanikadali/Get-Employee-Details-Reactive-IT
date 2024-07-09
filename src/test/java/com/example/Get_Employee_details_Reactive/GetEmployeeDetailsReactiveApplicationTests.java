@@ -24,8 +24,10 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 
 import com.example.Get_Employee_details_Reactive.dto.EmployeeDto;
 import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 
+// tells Spring Boot to start the application on a random port for testing.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class GetEmployeeDetailsReactiveApplicationTests {
 
@@ -34,6 +36,7 @@ class GetEmployeeDetailsReactiveApplicationTests {
     @LocalServerPort
     private int port;
 
+    // webTestClient used to perform HTTP requests in a reactive way.
     @Autowired
     private WebTestClient webTestClient;
 
@@ -47,6 +50,7 @@ class GetEmployeeDetailsReactiveApplicationTests {
         String expectedRequest = new String(Files.readAllBytes(Paths.get("src/test/resources/employees.json")));
         String allEmployeesRequest = new String(Files.readAllBytes(Paths.get("src/test/resources/allEmployees.json")));
 
+        // WireMock intercepts these external calls and returns the predefined responses.
         // Setup stub for the /employee endpoint
         stubFor(post(urlEqualTo("/employee"))
                 .willReturn(aResponse()
@@ -70,6 +74,7 @@ class GetEmployeeDetailsReactiveApplicationTests {
     void testCreateEmployee() throws IOException {
         String newEmployee = new String(Files.readAllBytes(Paths.get("src/test/resources/employees.json")));
 
+        // WebTestClient sends a POST request to the /employee endpoint.
         webTestClient.post().uri("/employee")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newEmployee)
@@ -86,6 +91,8 @@ class GetEmployeeDetailsReactiveApplicationTests {
 
     @Test
     void testGetAllEmployees() {
+        // The application processes these requests, which might involve calling
+        // external services (mocked by WireMock).
         webTestClient.get().uri("/employee")
                 .exchange()
                 .expectStatus().isOk()
