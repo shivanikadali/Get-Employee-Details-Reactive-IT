@@ -1,101 +1,74 @@
-// package com.example.Get_Employee_details_Reactive;
-
-// import static org.junit.jupiter.api.Assertions.assertEquals;
-// import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-// import org.junit.jupiter.api.AfterAll;
-// import org.junit.jupiter.api.BeforeAll;
-// import org.junit.jupiter.api.Test;
-// import org.springframework.beans.factory.annotation.Autowired;
-// import org.springframework.boot.test.context.SpringBootTest;
-// import org.springframework.boot.test.web.server.LocalServerPort;
-// import org.springframework.http.MediaType;
-// import org.springframework.test.web.reactive.server.WebTestClient;
-
-// import com.example.Get_Employee_details_Reactive.dto.EmployeeDto;
-// import com.github.tomakehurst.wiremock.WireMockServer;
-// import com.github.tomakehurst.wiremock.client.WireMock;
-// import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-
-// import reactor.core.publisher.Mono;
-
-// @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-// class GetEmployeeDetailsReactiveApplicationTests {
-
-// 	private static WireMockServer wireMockServer;
-
-// 	@LocalServerPort
-// 	private static int port;
-
-// 	@BeforeAll
-// 	public static void setUp() {
-// 		wireMockServer = new WireMockServer(WireMockConfiguration.options()
-// 				.dynamicPort());
-// 		wireMockServer.start();
-// 		WireMock.configureFor("localhost", wireMockServer.port());
-// 		wireMockServer.startRecording("http://localhost:9090/employee"); // Replace with your actual API URL
-// 	}
-
-// 	@AfterAll
-// 	public static void tearDown() {
-// 		wireMockServer.stopRecording();
-// 		wireMockServer.stop();
-// 	}
-
-// 	@Autowired
-// 	private WebTestClient webTestClient;
-
-// 	@Test
-// 	public void testGetAllEmployees() {
-// 		webTestClient.get().uri("/employee")
-// 				.exchange()
-// 				.expectStatus().isOk()
-// 				.expectBodyList(EmployeeDto.class)
-// 				.hasSize(9)
-// 				.contains(new EmployeeDto(1, "Eva", "Brown", "eva.brown@example.com"));
-// 	}
-
-// 	@Test
-// 	public void testCreateEmployee() {
-// 		EmployeeDto newEmployee = new EmployeeDto("Jane", "Smith", "jane.smith@example.com");
-
-// 		webTestClient.post().uri("/employee")
-// 				.contentType(MediaType.APPLICATION_JSON)
-// 				.body(Mono.just(newEmployee), EmployeeDto.class)
-// 				.exchange()
-// 				.expectStatus().isOk()
-// 				.expectBody(EmployeeDto.class)
-// 				.value(employee -> {
-// 					assertNotNull(employee.getEmpNo());
-// 					assertEquals("jane.smith@example.com", employee.getEmail());
-// 					assertEquals("Jane", employee.getFirstName());
-// 					assertEquals("Smith", employee.getLastName());
-// 				});
-// 	}
-// }
-
 package com.example.Get_Employee_details_Reactive;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import com.example.Get_Employee_details_Reactive.dto.EmployeeDto;
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class GetEmployeeDetailsReactiveApplicationTests {
 
+    private static WireMockServer wireMockServer;
+
+    @LocalServerPort
+    private int port;
+
     @Autowired
     private WebTestClient webTestClient;
 
+    @BeforeAll
+    public static void setUp() throws IOException {
+        wireMockServer = new WireMockServer(WireMockConfiguration.options().dynamicPort());
+        wireMockServer.start();
+        System.setProperty("wiremock.port", String.valueOf(wireMockServer.port()));
+        configureFor("localhost", wireMockServer.port());
+
+        String expectedRequest = new String(Files.readAllBytes(Paths.get("src/test/resources/employees.json")));
+        String allEmployeesRequest = new String(Files.readAllBytes(Paths.get("src/test/resources/allEmployees.json")));
+
+        // Setup stub for the /employee endpoint
+        stubFor(post(urlEqualTo("/employee"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withStatus(200)
+                        .withBody(expectedRequest)));
+
+        stubFor(get(urlEqualTo("/employee"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withStatus(200)
+                        .withBody(allEmployeesRequest)));
+    }
+
+    @AfterAll
+    public static void tearDown() {
+        wireMockServer.stop();
+    }
+
     @Test
-    void testCreateEmployee() {
-        EmployeeDto newEmployee = new EmployeeDto("Jane", "Smith", "jane.smith@example.com");
+    void testCreateEmployee() throws IOException {
+        String newEmployee = new String(Files.readAllBytes(Paths.get("src/test/resources/employees.json")));
 
         webTestClient.post().uri("/employee")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -106,7 +79,7 @@ class GetEmployeeDetailsReactiveApplicationTests {
                 .value(employee -> {
                     assertNotNull(employee.getEmpNo());
                     assertEquals("jane.smith@example.com", employee.getEmail());
-                    assertEquals("Jane", employee.getFirstName());
+                    assertEquals("reeju", employee.getFirstName());
                     assertEquals("Smith", employee.getLastName());
                 });
     }
@@ -117,7 +90,8 @@ class GetEmployeeDetailsReactiveApplicationTests {
                 .exchange()
                 .expectStatus().isOk()
                 .expectBodyList(EmployeeDto.class)
-                .hasSize(24) // Update the expected size according to your data
-                .contains(new EmployeeDto(1, "Eva", "Brown", "eva.brown@example.com"));
+                .hasSize(2) // Update the expected size according to your data
+                .contains(new EmployeeDto(1, "Eva", "Brown", "eva.brown@example.com"))
+                .contains(new EmployeeDto(2, "reeju", "Smith", "jane.smith@example.com"));
     }
 }
