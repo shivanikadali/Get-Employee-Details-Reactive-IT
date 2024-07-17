@@ -1,0 +1,23 @@
+{
+  "id" : "7b20df75-42a2-48cf-9dbc-9a5f376630ee",
+  "name" : "employee",
+  "request" : {
+    "url" : "/employee",
+    "method" : "POST",
+    "bodyPatterns" : [ {
+      "equalToJson" : "{\"empNo\":1,\"firstName\":\"jane\",\"lastName\":\"Smith\",\"email\":\"jane.smith@example.com\"}",
+      "ignoreArrayOrder" : true,
+      "ignoreExtraElements" : true
+    } ]
+  },
+  "response" : {
+    "status" : 200,
+    "body" : "{\"empNo\":1,\"firstName\":\"jane\",\"lastName\":\"Smith\",\"email\":\"jane.smith@example.com\"}",
+    "headers" : {
+      "Content-Type" : "application/json"
+    }
+  },
+  "uuid" : "7b20df75-42a2-48cf-9dbc-9a5f376630ee",
+  "persistent" : true,
+  "insertionIndex" : 1
+}
