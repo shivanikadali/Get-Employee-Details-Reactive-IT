@@ -1,23 +1,23 @@
 {
-  "id" : "7b20df75-42a2-48cf-9dbc-9a5f376630ee",
+  "id" : "8ebdbf5c-1e32-4be3-8fb5-5a293385cf33",
   "name" : "employee",
   "request" : {
     "url" : "/employee",
     "method" : "POST",
     "bodyPatterns" : [ {
-      "equalToJson" : "{\"empNo\":1,\"firstName\":\"jane\",\"lastName\":\"Smith\",\"email\":\"jane.smith@example.com\"}",
+      "equalToJson" : "{\"empNo\":0,\"firstName\":\"jane\",\"lastName\":\"Smith\",\"email\":\"jane.smith@example.com\"}",
       "ignoreArrayOrder" : true,
       "ignoreExtraElements" : true
     } ]
   },
   "response" : {
     "status" : 200,
-    "body" : "{\"empNo\":1,\"firstName\":\"jane\",\"lastName\":\"Smith\",\"email\":\"jane.smith@example.com\"}",
+    "body" : "{\"empNo\":7,\"firstName\":\"jane\",\"lastName\":\"Smith\",\"email\":\"jane.smith@example.com\"}",
     "headers" : {
       "Content-Type" : "application/json"
     }
   },
-  "uuid" : "7b20df75-42a2-48cf-9dbc-9a5f376630ee",
+  "uuid" : "8ebdbf5c-1e32-4be3-8fb5-5a293385cf33",
   "persistent" : true,
   "insertionIndex" : 1
 }
