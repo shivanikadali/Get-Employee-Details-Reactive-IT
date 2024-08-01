@@ -183,7 +183,6 @@ class GetEmployeeDetailsReactiveApplicationTests {
 
     @AfterAll
     public static void tearDown() {
-
         wireMockServer.stop();
     }
 

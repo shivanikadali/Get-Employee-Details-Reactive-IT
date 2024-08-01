@@ -9,16 +9,22 @@ import org.springframework.web.reactive.function.client.WebClient;
 import com.example.Get_Employee_details_Reactive.dto.EmployeeDto;
 
 import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Service
 @AllArgsConstructor
+@NoArgsConstructor
 public class ClientService {
 
     @Autowired
     private WebClient webClientBean;
 
+    public ClientService(String baseUrl) {
+        this.webClientBean = WebClient.create(baseUrl);
+    }
+    
     private static final Logger logger = LoggerFactory.getLogger(ClientService.class);
 
     public Flux<EmployeeDto> getAllEmployeeDetails() {

@@ -1,112 +1,26 @@
-// package com.example.Get_Employee_details_Reactive.unittesting;
-
-// import static org.mockito.ArgumentMatchers.any;
-// import static org.mockito.Mockito.when;
-
-// import java.util.Arrays;
-
-// import org.junit.jupiter.api.BeforeEach;
-// import org.junit.jupiter.api.Test;
-// import org.junit.jupiter.api.extension.ExtendWith;
-// import org.mockito.InjectMocks;
-// import org.mockito.Mock;
-// import org.mockito.MockitoAnnotations;
-// import org.mockito.junit.jupiter.MockitoExtension;
-// import org.springframework.web.reactive.function.client.WebClient;
-
-// import com.example.Get_Employee_details_Reactive.dto.EmployeeDto;
-// import com.example.Get_Employee_details_Reactive.service.ClientService;
-
-// import reactor.core.publisher.Flux;
-// import reactor.core.publisher.Mono;
-// import reactor.test.StepVerifier;
-
-// @ExtendWith(MockitoExtension.class)
-// public class ClientServiceTest {
-
-//     @InjectMocks
-//     private ClientService clientService;
-
-//     @Mock
-//     private WebClient webClientMock;
-
-//     @Mock
-//     private WebClient.RequestHeadersUriSpec<?> requestHeadersUriSpecMock;
-
-//     @Mock
-//     private WebClient.RequestBodyUriSpec requestBodyUriSpecMock;
-
-//     @Mock
-//     private WebClient.RequestHeadersSpec<?> requestHeadersSpecMock;
-
-//     @Mock
-//     private WebClient.ResponseSpec responseSpecMock;
-
-//     @BeforeEach
-//     public void setUp() {
-//         MockitoAnnotations.openMocks(this);
-
-//         // // Mock WebClient behavior for GET
-//         // when(webClientMock.get()).thenReturn(requestHeadersUriSpecMock);
-//         // when(requestHeadersUriSpecMock.uri(any(String.class))).thenReturn(requestHeadersSpecMock);
-//         // when(requestHeadersSpecMock.retrieve()).thenReturn(responseSpecMock);
-//         // when(responseSpecMock.bodyToFlux(EmployeeDto.class))
-//         //         .thenReturn(Flux.fromIterable(Arrays.asList(
-//         //                 new EmployeeDto("John", "Doe", "john.doe@example.com"),
-//         //                 new EmployeeDto("Jane", "Doe", "jane.doe@example.com"))));
-
-//         // Mock WebClient behavior for POST
-//         when(webClientMock.post()).thenReturn(requestBodyUriSpecMock);
-//         when(requestBodyUriSpecMock.uri(any(String.class))).thenReturn(requestBodyUriSpecMock);
-//         when(requestBodyUriSpecMock.body(any(), any(Class.class))).thenReturn(requestHeadersSpecMock);
-//         when(requestHeadersSpecMock.retrieve()).thenReturn(responseSpecMock);
-//         when(responseSpecMock.bodyToMono(EmployeeDto.class))
-//                 .thenReturn(Mono.just(new EmployeeDto("Jane", "Doe", "jane.doe@example.com")));
-//     }
-
-//     @Test
-//     public void testGetAllEmployees() {
-//         Flux<EmployeeDto> employeeFlux = clientService.getAllEmployeeDetails();
-
-//         StepVerifier.create(employeeFlux)
-//                 .expectNextMatches(employee -> employee.getFirstName().equals("John"))
-//                 .expectNextMatches(employee -> employee.getFirstName().equals("Jane"))
-//                 .verifyComplete();
-//     }
-
-//     @Test
-//     public void testCreateEmployee() {
-//         EmployeeDto newEmployee = new EmployeeDto("Jane", "Doe", "jane.doe@example.com");
-//         Mono<EmployeeDto> employeeMono = clientService.createEmployee(newEmployee);
-
-//         StepVerifier.create(employeeMono)
-//                 .expectNextMatches(employee -> employee.getFirstName().equals("Jane"))
-//                 .verifyComplete();
-//     }
-// }
 package com.example.Get_Employee_details_Reactive.unittesting;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.Arrays;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClient.RequestBodyUriSpec;
-import org.springframework.web.reactive.function.client.WebClient.RequestHeadersSpec;
-import org.springframework.web.reactive.function.client.WebClient.RequestHeadersUriSpec;
-import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 
 import com.example.Get_Employee_details_Reactive.dto.EmployeeDto;
 import com.example.Get_Employee_details_Reactive.service.ClientService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -114,72 +28,71 @@ import reactor.test.StepVerifier;
 @ExtendWith(MockitoExtension.class)
 public class ClientServiceTest {
 
+    public static MockWebServer mockBackEnd;
 
+    // @Autowired
+    ObjectMapper objectMapper = new ObjectMapper();
 
-    @InjectMocks
-    private ClientService clientService;
+    ClientService clientService;
 
-    @Mock
-    private WebClient webClientMock;
-
-    @Mock
-    private RequestHeadersUriSpec<?> requestHeadersUriSpecMock;
-
-    @Mock
-    private RequestBodyUriSpec requestBodyUriSpecMock;
-
-    @Mock
-    private RequestHeadersSpec<?> requestHeadersSpecMock;
-
-    @Mock
-    private ResponseSpec responseSpecMock;
-
-    @BeforeEach
-    public void setUp() {
-
+    @BeforeAll
+    static void setUp() throws IOException {
+        mockBackEnd = new MockWebServer();
+        mockBackEnd.start();
     }
 
+    @AfterAll
+    static void tearDown() throws IOException {
+        mockBackEnd.shutdown();
+    }
 
-    // @Test
-    // public void testGetAllEmployeeDetails() {
-    //     // Mock WebClient behavior for GET
-    //     WebClient.RequestHeadersUriSpec<?> requestHeadersUriSpecMock = mock(WebClient.RequestHeadersUriSpec.class);
-    //     WebClient.RequestHeadersSpec<?> requestHeadersSpecMock = mock(WebClient.RequestHeadersSpec.class);
-    //     WebClient.ResponseSpec responseSpecMock = mock(WebClient.ResponseSpec.class);
-
-    //     when(webClientMock.get()).thenReturn(requestHeadersUriSpecMock);
-    //     when(requestHeadersUriSpecMock.uri(any(String.class))).thenReturn(requestHeadersSpecMock);
-    //     when(requestHeadersSpecMock.retrieve()).thenReturn(responseSpecMock);
-    //     when(responseSpecMock.bodyToFlux(EmployeeDto.class)).thenReturn(Flux.fromIterable(Arrays.asList(
-    //             new EmployeeDto("John", "Doe", "john.doe@example.com"),
-    //             new EmployeeDto("Jane", "Doe", "jane.doe@example.com"))));
-
-    //     Flux<EmployeeDto> employeeFlux = clientService.getAllEmployeeDetails();
-
-    //     StepVerifier.create(employeeFlux)
-    //             .expectNextMatches(employee -> employee.getFirstName().equals("John"))
-    //             .expectNextMatches(employee -> employee.getFirstName().equals("Jane"))
-    //             .verifyComplete();
-    // }
-
-    @SuppressWarnings("unchecked")
+    @BeforeEach
+    public void initialize() {
+        String baseUrl = String.format("http://localhost:%s", mockBackEnd.getPort());
+        clientService = new ClientService(baseUrl);
+    }
 
     @Test
-    public void testCreateEmployee() {
-        // Mock WebClient behavior for POST
-        when(webClientMock.post()).thenReturn(requestBodyUriSpecMock);
-        when(requestBodyUriSpecMock.uri(any(String.class))).thenReturn(requestBodyUriSpecMock);
-        when(requestBodyUriSpecMock.body(any(), any(Class.class))).thenReturn(requestHeadersSpecMock);
-        when(requestHeadersSpecMock.retrieve()).thenReturn(responseSpecMock);
-        when(responseSpecMock.bodyToMono(EmployeeDto.class))
-                .thenReturn(Mono.just(new EmployeeDto("Jane", "Doe", "jane.doe@example.com")));
+    public void getEmployees() throws JsonProcessingException, InterruptedException {
+        EmployeeDto mockEmployee = new EmployeeDto(1, "john", "bush", "john@gmail.com");
+        EmployeeDto mockEmployee2 = new EmployeeDto(1, "john", "bush", "jack@gmail.com");
+        List<EmployeeDto> listOfEmployees = new ArrayList<>();
+        listOfEmployees.add(mockEmployee);
+        listOfEmployees.add(mockEmployee2);
+        mockBackEnd.enqueue(new MockResponse()
+                .setBody(objectMapper.writeValueAsString(listOfEmployees))
+                .addHeader("Content-Type", "application/json"));
+        Flux<EmployeeDto> employeeFlux = clientService.getAllEmployeeDetails();
 
-        EmployeeDto employeeToCreate = new EmployeeDto("Jane", "Doe", "jane.doe@example.com");
+        StepVerifier.create(employeeFlux)
+                .expectNextMatches(employee -> employee.getEmail()
+                        .equals(mockEmployee.getEmail()))
+                .expectNextMatches(employee -> employee.getEmail()
+                        .equals(mockEmployee2.getEmail()))
+                .verifyComplete();
 
-        Mono<EmployeeDto> employeeMono = clientService.createEmployee(employeeToCreate);
+        RecordedRequest recordedRequest = mockBackEnd.takeRequest();
+
+        assertEquals("GET", recordedRequest.getMethod());
+        assertEquals("/employee", recordedRequest.getPath());
+    }
+
+    @Test
+    public void createEmployees() throws JsonProcessingException, InterruptedException {
+        EmployeeDto mockEmployee = new EmployeeDto(1, "john", "bush", "john@gmail.com");
+        mockBackEnd.enqueue(new MockResponse()
+                .setBody(objectMapper.writeValueAsString(mockEmployee))
+                .addHeader("Content-Type", "application/json"));
+        Mono<EmployeeDto> employeeMono = clientService.createEmployee(mockEmployee);
 
         StepVerifier.create(employeeMono)
-                .expectNextMatches(employee -> employee.getFirstName().equals("Jane"))
+                .expectNextMatches(employee -> employee.getEmail()
+                        .equals(mockEmployee.getEmail()))
                 .verifyComplete();
+
+        RecordedRequest recordedRequest = mockBackEnd.takeRequest();
+
+        assertEquals("POST", recordedRequest.getMethod());
+        assertEquals("/employee", recordedRequest.getPath());
     }
 }
